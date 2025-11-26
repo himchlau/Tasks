@@ -13,19 +13,20 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      /* 背景圖片 */
       background: url("https://hackmd.io/_uploads/Hyc4usZlWe.png") no-repeat center center fixed;
       background-size: cover;
-
     }
 
+    /* 讓卡片固定在右上角，不遮住狗狗臉 */
     .card {
-      background: #ffffff;
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.95);
       padding: 24px 28px 30px;
       border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
       max-width: 480px;
       width: 100%;
     }
@@ -114,6 +115,15 @@
       color: #999;
       line-height: 1.4;
     }
+
+    @media (max-width: 600px) {
+      .card {
+        top: 8px;
+        right: 8px;
+        left: 8px;
+        max-width: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -144,33 +154,13 @@
   </div>
 
   <script>
-    // === 初始化日期下拉選單 ===
     const yearSelect = document.getElementById('yearSelect');
     const monthSelect = document.getElementById('monthSelect');
     const daySelect = document.getElementById('daySelect');
     const resultDiv = document.getElementById('result');
     const calcBtn = document.getElementById('calcBtn');
 
-    function initDateSelectors() {
-      const today = new Date();
-      const currentYear = today.getFullYear();
-
-      // 年份：預設往前推 25 年
-      const startYear = currentYear - 25;
-      addOption(yearSelect, '', '年');
-      for (let y = currentYear; y >= startYear; y--) {
-        addOption(yearSelect, y, y + ' 年');
-      }
-
-      // 月份
-      addOption(monthSelect, '', '月');
-      for (let m = 1; m <= 12; m++) {
-        addOption(monthSelect, m, m + ' 月');
-      }
-
-      // 日期（依選定的年/月變動）
-      resetDayOptions();
-    }
+    const STORAGE_KEY = 'miaoliBirthDate';
 
     function addOption(select, value, text) {
       const opt = document.createElement('option');
@@ -196,29 +186,81 @@
         return;
       }
 
-      // 取得指定年月的天數
       const daysInMonth = new Date(year, month, 0).getDate();
       resetDayOptions(daysInMonth);
+    }
+
+    function initDateSelectors() {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const startYear = currentYear - 25;
+
+      addOption(yearSelect, '', '年');
+      for (let y = currentYear; y >= startYear; y--) {
+        addOption(yearSelect, y, y + ' 年');
+      }
+
+      addOption(monthSelect, '', '月');
+      for (let m = 1; m <= 12; m++) {
+        addOption(monthSelect, m, m + ' 月');
+      }
+
+      resetDayOptions(31);
+    }
+
+    // 讀取 localStorage 的上次輸入
+    function loadBirthDateFromStorage() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return;
+
+        const data = JSON.parse(stored);
+        const { year, month, day } = data || {};
+
+        if (year && month) {
+          // 設定年、月
+          if ([...yearSelect.options].some(o => Number(o.value) === Number(year))) {
+            yearSelect.value = year;
+          }
+          if ([...monthSelect.options].some(o => Number(o.value) === Number(month))) {
+            monthSelect.value = month;
+          }
+
+          // 依年/月更新日期選項後，再設定日
+          updateDays();
+
+          if (day && [...daySelect.options].some(o => Number(o.value) === Number(day))) {
+            daySelect.value = day;
+          }
+        }
+      } catch (e) {
+        console.warn('讀取妙麗出生日期失敗：', e);
+      }
+    }
+
+    // 儲存到 localStorage
+    function saveBirthDateToStorage(year, month, day) {
+      try {
+        const data = { year, month, day };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn('儲存妙麗出生日期失敗：', e);
+      }
     }
 
     yearSelect.addEventListener('change', updateDays);
     monthSelect.addEventListener('change', updateDays);
 
-    // === 計算狗年齡與人類年齡 ===
-
     function calculateDogYears(birthDate, today) {
       const diffMs = today - birthDate;
-      if (diffMs < 0) return null; // 出生日期在未來
+      if (diffMs < 0) return null;
 
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const dogYears = diffDays / 365.25; // 以一年 365.25 天為近似
+      const dogYears = diffDays / 365.25;
       return dogYears;
     }
 
-    // 中型犬常見公式（15–9–4 規則實作）
-    // 0–1 歲：線性從 0～15 人年
-    // 1–2 歲：線性從 15～24 人年
-    // ≥2 歲：24 + 4 × (D - 2)
+    // 中型犬 15–9–4 規則（連續版本）
     function dogToHumanAge(dogYears) {
       if (dogYears <= 0) return 0;
       if (dogYears <= 1) {
@@ -251,7 +293,6 @@
 
       const humanYears = dogToHumanAge(dogYears);
 
-      // 顯示結果：狗年齡保留 1 位小數，人類年齡四捨五入成整數
       const dogYearsDisplay = dogYears.toFixed(1);
       const humanYearsDisplay = Math.round(humanYears);
 
@@ -259,10 +300,14 @@
         '<div class="result-title">計算結果：</div>' +
         '妙麗現在大約 <strong>' + dogYearsDisplay + '</strong> 歲狗年齡，<br>' +
         '換算成人類年齡大約是 <strong>' + humanYearsDisplay + '</strong> 歲。';
+
+      // 計算成功後儲存目前選擇
+      saveBirthDateToStorage(year, month, day);
     });
 
     // 初始化
     initDateSelectors();
+    loadBirthDateFromStorage();
   </script>
 </body>
 </html>
