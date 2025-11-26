@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>妙麗歲數計算機｜狗狗年齡換算人類年齡</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "Noto Sans TC", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url("https://hackmd.io/_uploads/Hyc4usZlWe.png") no-repeat center center fixed;
+      background-size: cover;
+
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 24px 28px 30px;
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+      max-width: 480px;
+      width: 100%;
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 4px;
+      font-size: 1.8rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #777;
+      margin-bottom: 20px;
+    }
+
+    .label {
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    select {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 0.95rem;
+      background-color: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff9a9e, #fecf66);
+      color: #4a2a00;
+      margin-top: 4px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .result {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fff8e1;
+      border: 1px solid #ffe0b2;
+      font-size: 0.98rem;
+      line-height: 1.6;
+      color: #5a3a00;
+      min-height: 46px;
+    }
+
+    .result-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .note {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #999;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>妙麗歲數計算機</h1>
+    <div class="subtitle">用中型犬「15–9–5」規則，換算妙麗的狗狗歲數與人類年齡</div>
+
+    <div class="label">請選擇妙麗的出生日期：</div>
+    <div class="row">
+      <select id="yearSelect"></select>
+      <select id="monthSelect"></select>
+      <select id="daySelect"></select>
+    </div>
+
+    <button id="calcBtn">幫妙麗算歲數 🐾</button>
+
+    <div id="result" class="result">
+      請先選擇妙麗的出生日期，然後按下按鈕。
+    </div>
+
+    <div class="note">
+      演算法說明：<br>
+      ‧ 第 1 個狗年 ≈ 15 個人年<br>
+      ‧ 第 2 個狗年 ≈ 再加 9 個人年（共約 24 人年）<br>
+      ‧ 之後每多 1 狗年 ≈ 再加約 4–5 人年（此處以 4 人年作為中型犬近似值）<br>
+      ‧ 實際年齡會依個體差異、體重與品種不同而略有出入。
+    </div>
+  </div>
+
+  <script>
+    // === 初始化日期下拉選單 ===
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+    const daySelect = document.getElementById('daySelect');
+    const resultDiv = document.getElementById('result');
+    const calcBtn = document.getElementById('calcBtn');
+
+    function initDateSelectors() {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+
+      // 年份：預設往前推 25 年
+      const startYear = currentYear - 25;
+      addOption(yearSelect, '', '年');
+      for (let y = currentYear; y >= startYear; y--) {
+        addOption(yearSelect, y, y + ' 年');
+      }
+
+      // 月份
+      addOption(monthSelect, '', '月');
+      for (let m = 1; m <= 12; m++) {
+        addOption(monthSelect, m, m + ' 月');
+      }
+
+      // 日期（依選定的年/月變動）
+      resetDayOptions();
+    }
+
+    function addOption(select, value, text) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = text;
+      select.appendChild(opt);
+    }
+
+    function resetDayOptions(daysInMonth = 31) {
+      daySelect.innerHTML = '';
+      addOption(daySelect, '', '日');
+      for (let d = 1; d <= daysInMonth; d++) {
+        addOption(daySelect, d, d + ' 日');
+      }
+    }
+
+    function updateDays() {
+      const year = parseInt(yearSelect.value, 10);
+      const month = parseInt(monthSelect.value, 10);
+
+      if (!year || !month) {
+        resetDayOptions(31);
+        return;
+      }
+
+      // 取得指定年月的天數
+      const daysInMonth = new Date(year, month, 0).getDate();
+      resetDayOptions(daysInMonth);
+    }
+
+    yearSelect.addEventListener('change', updateDays);
+    monthSelect.addEventListener('change', updateDays);
+
+    // === 計算狗年齡與人類年齡 ===
+
+    function calculateDogYears(birthDate, today) {
+      const diffMs = today - birthDate;
+      if (diffMs < 0) return null; // 出生日期在未來
+
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      const dogYears = diffDays / 365.25; // 以一年 365.25 天為近似
+      return dogYears;
+    }
+
+    // 中型犬常見公式（15–9–4 規則實作）
+    // 0–1 歲：線性從 0～15 人年
+    // 1–2 歲：線性從 15～24 人年
+    // ≥2 歲：24 + 4 × (D - 2)
+    function dogToHumanAge(dogYears) {
+      if (dogYears <= 0) return 0;
+      if (dogYears <= 1) {
+        return 15 * dogYears;
+      } else if (dogYears <= 2) {
+        return 15 + 9 * (dogYears - 1);
+      } else {
+        return 24 + 4 * (dogYears - 2);
+      }
+    }
+
+    calcBtn.addEventListener('click', () => {
+      const year = parseInt(yearSelect.value, 10);
+      const month = parseInt(monthSelect.value, 10);
+      const day = parseInt(daySelect.value, 10);
+
+      if (!year || !month || !day) {
+        resultDiv.innerHTML = '<span class="result-title">請確認：</span>請完整選擇「年、月、日」喔！';
+        return;
+      }
+
+      const birthDate = new Date(year, month - 1, day);
+      const today = new Date();
+
+      const dogYears = calculateDogYears(birthDate, today);
+      if (dogYears === null) {
+        resultDiv.innerHTML = '<span class="result-title">Oops！</span> 出生日期好像在未來，請重新確認。';
+        return;
+      }
+
+      const humanYears = dogToHumanAge(dogYears);
+
+      // 顯示結果：狗年齡保留 1 位小數，人類年齡四捨五入成整數
+      const dogYearsDisplay = dogYears.toFixed(1);
+      const humanYearsDisplay = Math.round(humanYears);
+
+      resultDiv.innerHTML =
+        '<div class="result-title">計算結果：</div>' +
+        '妙麗現在大約 <strong>' + dogYearsDisplay + '</strong> 歲狗年齡，<br>' +
+        '換算成人類年齡大約是 <strong>' + humanYearsDisplay + '</strong> 歲。';
+    });
+
+    // 初始化
+    initDateSelectors();
+  </script>
+</body>
+</html>
