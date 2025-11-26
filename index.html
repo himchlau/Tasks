@@ -13,105 +13,104 @@
     body {
       margin: 0;
       min-height: 100vh;
-      /* 背景圖片 */
       background: url("https://hackmd.io/_uploads/Hyc4usZlWe.png") no-repeat center center fixed;
       background-size: cover;
     }
 
-    /* 讓卡片固定在右上角，不遮住狗狗臉 */
+    /* ✅ 縮小計算機 + 固定在右上角 */
     .card {
       position: fixed;
-      top: 16px;
-      right: 16px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 24px 28px 30px;
-      border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
-      max-width: 480px;
+      top: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 16px 18px 20px;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+      max-width: 340px;
       width: 100%;
     }
 
     h1 {
       margin-top: 0;
       margin-bottom: 4px;
-      font-size: 1.8rem;
+      font-size: 1.3rem;
       text-align: center;
     }
 
     .subtitle {
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       color: #777;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .label {
-      margin-bottom: 6px;
-      font-size: 0.95rem;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
       font-weight: 600;
       color: #444;
     }
 
     .row {
       display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 6px;
+      margin-bottom: 10px;
     }
 
     select {
       flex: 1;
-      padding: 8px 10px;
-      border-radius: 10px;
+      padding: 6px 8px;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       background-color: #fff;
     }
 
     button {
       width: 100%;
-      padding: 10px 14px;
+      padding: 8px 10px;
       border-radius: 999px;
       border: none;
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
       background: linear-gradient(135deg, #ff9a9e, #fecf66);
       color: #4a2a00;
-      margin-top: 4px;
+      margin-top: 2px;
       transition: transform 0.1s ease, box-shadow 0.1s ease;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
     }
 
     button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 7px 16px rgba(0, 0, 0, 0.22);
     }
 
     button:active {
       transform: translateY(1px);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
     .result {
-      margin-top: 18px;
-      padding: 12px 14px;
-      border-radius: 12px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
       background: #fff8e1;
       border: 1px solid #ffe0b2;
-      font-size: 0.98rem;
-      line-height: 1.6;
+      font-size: 0.88rem;
+      line-height: 1.5;
       color: #5a3a00;
-      min-height: 46px;
+      min-height: 40px;
     }
 
     .result-title {
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .note {
-      margin-top: 10px;
-      font-size: 0.8rem;
+      margin-top: 8px;
+      font-size: 0.72rem;
       color: #999;
       line-height: 1.4;
     }
@@ -160,6 +159,7 @@
     const resultDiv = document.getElementById('result');
     const calcBtn = document.getElementById('calcBtn');
 
+    /* ✅ localStorage key：用來記住上次生日 */
     const STORAGE_KEY = 'miaoliBirthDate';
 
     function addOption(select, value, text) {
@@ -208,17 +208,15 @@
       resetDayOptions(31);
     }
 
-    // 讀取 localStorage 的上次輸入
+    /* ✅ 從 localStorage 載入生日（刷新後沿用） */
     function loadBirthDateFromStorage() {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (!stored) return;
-
         const data = JSON.parse(stored);
         const { year, month, day } = data || {};
 
         if (year && month) {
-          // 設定年、月
           if ([...yearSelect.options].some(o => Number(o.value) === Number(year))) {
             yearSelect.value = year;
           }
@@ -226,7 +224,6 @@
             monthSelect.value = month;
           }
 
-          // 依年/月更新日期選項後，再設定日
           updateDays();
 
           if (day && [...daySelect.options].some(o => Number(o.value) === Number(day))) {
@@ -238,7 +235,7 @@
       }
     }
 
-    // 儲存到 localStorage
+    /* ✅ 儲存生日到 localStorage */
     function saveBirthDateToStorage(year, month, day) {
       try {
         const data = { year, month, day };
@@ -256,11 +253,10 @@
       if (diffMs < 0) return null;
 
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
-      const dogYears = diffDays / 365.25;
-      return dogYears;
+      return diffDays / 365.25;
     }
 
-    // 中型犬 15–9–4 規則（連續版本）
+    // 中型犬 15–9–4 規則（連續版）
     function dogToHumanAge(dogYears) {
       if (dogYears <= 0) return 0;
       if (dogYears <= 1) {
@@ -301,11 +297,11 @@
         '妙麗現在大約 <strong>' + dogYearsDisplay + '</strong> 歲狗年齡，<br>' +
         '換算成人類年齡大約是 <strong>' + humanYearsDisplay + '</strong> 歲。';
 
-      // 計算成功後儲存目前選擇
+      // ✅ 計算成功後，記住生日
       saveBirthDateToStorage(year, month, day);
     });
 
-    // 初始化
+    // ✅ 初始化 + 從 localStorage 載入之前的生日
     initDateSelectors();
     loadBirthDateFromStorage();
   </script>
